@@ -1,4 +1,5 @@
-function BackBook(bookData, SS){
+function BackBook(bookData, SS, STATUS_SHEET){
+  //bookData = {sheetName};
   
   let answers = GetBackData(bookData);
     if (answers == null){
@@ -6,7 +7,7 @@ function BackBook(bookData, SS){
   }
   Logger.log("answers:" + answers);
 
-  let bookRows = SearchBookRows(answers, SS);
+  let bookRows = SearchBookRows(answers);
   if (bookRows == ""){
     return;
   }
@@ -14,9 +15,9 @@ function BackBook(bookData, SS){
 
   InsertBackLogData(answers, SS);
 
-  ResetStatus(answers, bookRows, SS);
+  ResetStatus(answers, bookRows,STATUS_SHEET);
 
-  UpdateFormByBack(answers, bookRows, SS);
+  UpdateFormByBack(answers, bookRows, STATUS_SHEET);
 }
 
 function GetBackData(bookData){
@@ -26,9 +27,8 @@ function GetBackData(bookData){
   error.book = bookData.bookNumber +"-返却";
   error.where = "GetBackData(BorrowManager)";
 
-  const TriggerSS = SpreadsheetApp.getActiveSpreadsheet();
-
-  let sheet = TriggerSS.getSheetByName(bookData.sheetName);
+  const TRIGGER_SS = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = TRIGGER_SS.getSheetByName(bookData.sheetName);
 
   let lastRow = sheet.getLastRow();
   let range = sheet.getRange("A:D");
@@ -51,7 +51,6 @@ function GetBackData(bookData){
     InsertError(error);
     return;
   }
-  // Logger.log(answers);
   return answers;
 }
 
@@ -94,7 +93,7 @@ function InsertBackLogData(answers, SS){
 
 }
 
-function ResetStatus(answers, bookRows, SS){
+function ResetStatus(answers, bookRows, STATUS_SHEET){
   // answers = {bookNumber : 1,
   //            employeeName : "山田太郎",
   //            employeeNumber : 4444,
@@ -111,12 +110,6 @@ function ResetStatus(answers, bookRows, SS){
   error.formAnswer2 = "-";
   error.where = "ResetStatus(BackManager)";
 
-  const STATUS_SHEET = SS.getSheetByName("貸出状況");
-  if (STATUS_SHEET == null || STATUS_SHEET == ""){
-    error.what = "スプレッドシート「図書貸出管理」内，「貸出状況」シートの名前が間違っています";
-    InsertError(error);
-    return;
-  }
   let range = STATUS_SHEET.getRange("A:G");
   let lastRow = STATUS_SHEET.getLastRow();
   
@@ -137,7 +130,7 @@ function ResetStatus(answers, bookRows, SS){
   statusCells.clear();
 }
 
-function UpdateFormByBack(answers, bookRows, SS) {
+function UpdateFormByBack(answers, bookRows, STATUS_SHEET) {
   // answers = {bookNumber : 3};
   // SS = SpreadsheetApp.openById("19yUkB2P7c9IM6yv_FMoLu21VUMaC9AxiktGU5gfmu-c");
 
@@ -150,23 +143,12 @@ function UpdateFormByBack(answers, bookRows, SS) {
   error.formAnswer2 = "-";
   error.where = "UpdateFormByBack(BackManager)";
 
-  const STATUS_SHEET = SS.getSheetByName("貸出状況");
-  if (STATUS_SHEET == null || STATUS_SHEET == ""){
-    error.what = "スプレッドシート「図書貸出管理」内，「貸出状況」シートの名前が間違っています";
-    InsertError(error);
-    return;
-  }
-
   let range = STATUS_SHEET.getRange("A:G");
   let lastRow = STATUS_SHEET.getLastRow();
 
-  if (answers.bookNumber == null || answers.bookNumber == ""){
-    error.what = "answersが取得できませんでした";
-    InsertError(error);
-    return;
-  }
+  //フォームを取ってくる
+  let formId = range.getCell(bookRows[0], 7).getValue();
 
-  var formId = range.getCell(bookRows[0], 7).getValue();
   if (formId == null || formId == ""){
     error.what = "「貸出状況」シートにフォームIDがありません";
     InsertError(error);
@@ -182,18 +164,18 @@ function UpdateFormByBack(answers, bookRows, SS) {
     return;
   }
  
-  let items = form.getItems();  
+  //フォームの書き換え
+  let items = form.getItems();
   for (let i = 0; i < items.length; i++){
     form.deleteItem(items[i]);
   }
   form.setDescription("ご記入いただいた情報は図書管理目的のみに使用します。"
                      + "\n借りた人の名前や社員番号が，他の社員の方々に公開されることはございませんのでご安心ください。"
-                     + "\n\n一人一冊まで借りられます。");
+                     + "\n\n貸し出しは一人一冊までです。");
   form.addTextItem().setTitle("お名前").setRequired(true);
   const validation = FormApp.createTextValidation().requireNumber().build();
   form.addTextItem().setTitle("社員番号").setRequired(true).setValidation(validation)
     .setHelpText("半角数字４桁でご入力ください");
   form.addDateItem().setTitle('貸出日').setRequired(true).setHelpText("今日の日付をご記入ください");
   form.addDateItem().setTitle('返却日').setRequired(true).setHelpText("２週間後の日付をご記入ください");
-
 }

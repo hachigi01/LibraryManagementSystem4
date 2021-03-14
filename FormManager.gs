@@ -9,57 +9,58 @@ function ManageLibrary(){
   error.formAnswer2 = "";
   error.where = "ManageLibrary(FormManager)";
 
-  try {
-    const SS = SpreadsheetApp.openById(SSId());
-  }
-  catch (e) {
-    error.what = "スプレッドシート「図書貸出管理」のIDが間違っています";
-    InsertError(error);
+  //定数の宣言
+  const SS = ConstSS();
+  if (SS == null){
     return;
   }
-  const SS = SpreadsheetApp.openById(SSId());
-  // Logger.log(SS.getName());
 
-  const TriggerSS = SpreadsheetApp.getActiveSpreadsheet();
-  const SHEETS = TriggerSS.getSheets();
-  let timestamp = [];
-  let sortedTimestamp = [];
+  const STATUS_SHEET = ConstStatusSheet();
+  if (STATUS_SHEET == null){
+    return;
+  }
+   
+  //「図書貸出管理トリガー用」SSを取得
+  const TRIGGER_SS = SpreadsheetApp.getActiveSpreadsheet();
+  const SHEETS = TRIGGER_SS.getSheets();
+  let timestamps = [];
+  let sortedTimestamps = [];
   let bookData = {};
 
-  // Logger.log(SHEETS[1].getRange(SHEETS[1].getLastRow(), 1).getCell(1, 1).getValue());
   //それぞれのシートの一番新しいタイムスタンプを取得
   for (let i = 0; i < SHEETS.length; i++){
     if (SHEETS[i].getLastRow() == 1){
-      timestamp[i] = 0;
+      timestamps[i] = 0;
+      sortedTimestamps = 0;
     } else {
-      timestamp[i] = SHEETS[i].getRange(SHEETS[i].getLastRow(), 1).getCell(1,1).getValue();
-      sortedTimestamp[i] = SHEETS[i].getRange(SHEETS[i].getLastRow(), 1).getCell(1,1).getValue();
+      timestamps[i] = SHEETS[i].getRange(SHEETS[i].getLastRow(), 1).getCell(1,1).getValue();
+      sortedTimestamps[i] = timestamps[i];
  
       if (SHEETS[i].getRange(SHEETS[i].getLastRow(), 1).getCell(1,1).getValue() == ""){
-        error.what = "シート「" + SHEETS[i].getName() +"」の最終行" + SHEETS[i].getLastRow() +"行目にタイムスタンプがありません";
+        error.what = "シート「" + SHEETS[i].getName() +"」の最終行" + SHEETS[i].getLastRow() +"行目に" 
+                    +"タイムスタンプがありません";
         InsertError(error);
         return;
       }
   　}
   }
+
+  //すべてのシートの中で一番新しいタイムスタンプの本を探す
   sortedTimestamp.sort(function(a, b) {return b - a;});
-  // Logger.log(sortedTimestamp[0]);
-  //一番新しいタイムスタンプの本を探す
+
   for (let i = 0; i < SHEETS.length; i++){
     if (sortedTimestamp[0].toString() == timestamp[i].toString()){
-      var triggerSheet = SHEETS[i]; 
-      bookData.sheetName = triggerSheet.getName();
+      bookData.sheetName = SHEETS[i].getName();
     }
   }
 
   if (bookData.sheetName.indexOf("貸出")　>= 0){
-
-    var sheetNameSplit = triggerSheet.getName().split("-");
+    var sheetNameSplit = bookData.sheetName.split("-");
     bookData.bookNumber = sheetNameSplit[0];
-    BorrowBook(bookData, SS);  //bookData = {sheetName, bookNumber}
+    BorrowBook(bookData, SS, STATUS_SHEET);  //bookData = {sheetName, bookNumber}
 
   } else if(bookData.sheetName.indexOf("返却")　>= 0){
-    BackBook(bookData, SS);  //bookData = {sheetName}
+    BackBook(bookData, SS, STATUS_SHEET);  //bookData = {sheetName}
   }
 }
 
