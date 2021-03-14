@@ -74,25 +74,13 @@ function CreateNewForm() {
   error.formAnswer1 = "";
   error.formAnswer2 = "";
 
-  try {
-    const SS = SpreadsheetApp.openById(SSId());
-  }
-  catch (e) {
-    // Logger.log("error");
-    error.book = "";
-    error.where = "CreateNewForm(FormManager)";
-    error.what = "スプレッドシート「図書貸出管理」のIDが間違っています";
-    InsertError(error);
+  const SS = ConstSS();
+  if (SS == null){
     return;
   }
-  const SS = SpreadsheetApp.openById(SSId());
   
-  const STATUS_SHEET = SS.getSheetByName("貸出状況");
+  const STATUS_SHEET = ConstStatusSheet();
   if (STATUS_SHEET == null){
-    error.book = "";
-    error.where = "CreateNewForm(FormManager)";
-    error.what = "スプレッドシート「図書貸出管理」内，「貸出状況」シートの名前が間違っています";
-    InsertError(error);
     return;
   }
 
@@ -126,15 +114,18 @@ function CreateNewForm() {
   SS.getActiveSheet().setName(bookNumber);
   SS.moveActiveSheet(SS.getNumSheets()); //新しい貸出履歴シートを最後尾に移動
 
-  let logSheet = SS.getActiveSheet()
-  logSheet.getRange(1, 1).getCell(1, 1).setValue("bookTitle");
-  logSheet.getRange(2, 1).getCell(1, 1).setValue(bookTitle);
-  logSheet.getRange(1, 2).getCell(1, 1).setValue("employeeName");
-  logSheet.getRange(1, 3).getCell(1, 1).setValue("employeeNumber");
-  logSheet.getRange(1, 4).getCell(1, 1).setValue("borrowDate");
-  logSheet.getRange(1, 5).getCell(1, 1).setValue("backDeadline");
-  logSheet.getRange(1, 6).getCell(1, 1).setValue("backDate");
-　SS.setFrozenRows(1);
+  let logSheet = SS.getActiveSheet();
+  // logSheet.getRange(1, 1).getCell(1, 1).setValue("bookTitle");
+  // logSheet.getRange(1, 2).getCell(1, 1).setValue("employeeName");
+  // logSheet.getRange(1, 3).getCell(1, 1).setValue("employeeNumber");
+  // logSheet.getRange(1, 4).getCell(1, 1).setValue("borrowDate");
+  // logSheet.getRange(1, 5).getCell(1, 1).setValue("backDeadline");
+  // logSheet.getRange(1, 6).getCell(1, 1).setValue("backDate");
+
+  let hairetsu = [["bookTitle", "employeeName", "employeeNumber", "borrowDate", "backDeadline", "backDate"],
+                  [bookTitle, "", "", "", "", ""]];
+  SHEET.getRange(1, 1, 2, 6).setValues(hairetsu);
+  SS.setFrozenRows(1);
 
 
   //貸出フォームの作成

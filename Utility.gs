@@ -73,3 +73,14 @@ function SearchBookRows(bookData, SS){
   Logger.log(bookRows);
   return bookRows;
 }
+
+function Test (){
+  const SS = ConstSS();
+  const SHEET = SS.getSheetByName("シート19");
+  let bookTitle = "bookTitle1";
+  let hairetsu = [["bookTitle", "employeeName", "employeeNumber", "borrowDate", "backDeadline", "backDate"],[bookTitle, "", "", "", "", ""]];
+  // let hairetsu = [];
+  // hairetsu[0] = "bookTitle";
+  // hairetsu[1] = "employeeName";
+  SHEET.getRange(1, 1, 2, 6).setValues(hairetsu);
+}
