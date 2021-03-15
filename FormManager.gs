@@ -194,12 +194,9 @@ function CreateNewForm() {
   //   error.what = "（貸出シートを紐づけ）新しいシートがありません";
   //   InsertError(error);
   // }
-  let newSheet = [];
-  triggerSheetsNames.filter(value => {
-    if (value.indexOf("フォームの回答") >= 0){
-      newSheet.push(value);
-    }
-  })
+  // let newSheet = [];
+  // Logger.log(triggerSheetsNames);
+  let newSheet = triggerSheetsNames.filter(value => value.indexOf("フォームの回答") >= 0);
   // Logger.log(newSheet);
 
   if (newSheet.length == 1){
