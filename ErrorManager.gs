@@ -1,7 +1,11 @@
 function InsertError(error) {
   Logger.log(error.where + "でエラーが発生しました")
   
-  const SS = SpreadsheetApp.openById(SSId());
+  const SS = ConstSS();
+  if (SS == null){
+    return;
+  }
+
   const ERROR_SHEET = SS.getSheetByName("エラー用");
   let lastRow = ERROR_SHEET.getLastRow();
 

@@ -9,57 +9,58 @@ function ManageLibrary(){
   error.formAnswer2 = "";
   error.where = "ManageLibrary(FormManager)";
 
-  try {
-    const SS = SpreadsheetApp.openById(SSId());
-  }
-  catch (e) {
-    error.what = "スプレッドシート「図書貸出管理」のIDが間違っています";
-    InsertError(error);
+  //定数の宣言
+  const SS = ConstSS();
+  if (SS == null){
     return;
   }
-  const SS = SpreadsheetApp.openById(SSId());
-  // Logger.log(SS.getName());
 
-  const TriggerSS = SpreadsheetApp.getActiveSpreadsheet();
-  const SHEETS = TriggerSS.getSheets();
-  let timestamp = [];
-  let sortedTimestamp = [];
+  const STATUS_SHEET = ConstStatusSheet();
+  if (STATUS_SHEET == null){
+    return;
+  }
+   
+  //「図書貸出管理トリガー用」SSを取得
+  const TRIGGER_SS = SpreadsheetApp.getActiveSpreadsheet();
+  const SHEETS = TRIGGER_SS.getSheets();
+  let timestamps = [];
+  let sortedTimestamps = [];
   let bookData = {};
 
-  // Logger.log(SHEETS[1].getRange(SHEETS[1].getLastRow(), 1).getCell(1, 1).getValue());
   //それぞれのシートの一番新しいタイムスタンプを取得
   for (let i = 0; i < SHEETS.length; i++){
     if (SHEETS[i].getLastRow() == 1){
-      timestamp[i] = 0;
+      timestamps[i] = 0;
+      sortedTimestamps = 0;
     } else {
-      timestamp[i] = SHEETS[i].getRange(SHEETS[i].getLastRow(), 1).getCell(1,1).getValue();
-      sortedTimestamp[i] = SHEETS[i].getRange(SHEETS[i].getLastRow(), 1).getCell(1,1).getValue();
+      timestamps[i] = SHEETS[i].getRange(SHEETS[i].getLastRow(), 1).getCell(1,1).getValue();
+      sortedTimestamps[i] = timestamps[i];
  
       if (SHEETS[i].getRange(SHEETS[i].getLastRow(), 1).getCell(1,1).getValue() == ""){
-        error.what = "シート「" + SHEETS[i].getName() +"」の最終行" + SHEETS[i].getLastRow() +"行目にタイムスタンプがありません";
+        error.what = "シート「" + SHEETS[i].getName() +"」の最終行" + SHEETS[i].getLastRow() +"行目に" 
+                    +"タイムスタンプがありません";
         InsertError(error);
         return;
       }
   　}
   }
+
+  //すべてのシートの中で一番新しいタイムスタンプの本を探す
   sortedTimestamp.sort(function(a, b) {return b - a;});
-  // Logger.log(sortedTimestamp[0]);
-  //一番新しいタイムスタンプの本を探す
+
   for (let i = 0; i < SHEETS.length; i++){
     if (sortedTimestamp[0].toString() == timestamp[i].toString()){
-      var triggerSheet = SHEETS[i]; 
-      bookData.sheetName = triggerSheet.getName();
+      bookData.sheetName = SHEETS[i].getName();
     }
   }
 
   if (bookData.sheetName.indexOf("貸出")　>= 0){
-
-    var sheetNameSplit = triggerSheet.getName().split("-");
+    var sheetNameSplit = bookData.sheetName.split("-");
     bookData.bookNumber = sheetNameSplit[0];
-    BorrowBook(bookData, SS);  //bookData = {sheetName, bookNumber}
+    BorrowBook(bookData, SS, STATUS_SHEET);  //bookData = {sheetName, bookNumber}
 
   } else if(bookData.sheetName.indexOf("返却")　>= 0){
-    BackBook(bookData, SS);  //bookData = {sheetName}
+    BackBook(bookData, SS, STATUS_SHEET);  //bookData = {sheetName}
   }
 }
 
@@ -73,25 +74,13 @@ function CreateNewForm() {
   error.formAnswer1 = "";
   error.formAnswer2 = "";
 
-  try {
-    const SS = SpreadsheetApp.openById(SSId());
-  }
-  catch (e) {
-    // Logger.log("error");
-    error.book = "";
-    error.where = "CreateNewForm(FormManager)";
-    error.what = "スプレッドシート「図書貸出管理」のIDが間違っています";
-    InsertError(error);
+  const SS = ConstSS();
+  if (SS == null){
     return;
   }
-  const SS = SpreadsheetApp.openById(SSId());
   
-  const STATUS_SHEET = SS.getSheetByName("貸出状況");
+  const STATUS_SHEET = ConstStatusSheet();
   if (STATUS_SHEET == null){
-    error.book = "";
-    error.where = "CreateNewForm(FormManager)";
-    error.what = "スプレッドシート「図書貸出管理」内，「貸出状況」シートの名前が間違っています";
-    InsertError(error);
     return;
   }
 
@@ -125,15 +114,11 @@ function CreateNewForm() {
   SS.getActiveSheet().setName(bookNumber);
   SS.moveActiveSheet(SS.getNumSheets()); //新しい貸出履歴シートを最後尾に移動
 
-  let logSheet = SS.getActiveSheet()
-  logSheet.getRange(1, 1).getCell(1, 1).setValue("bookTitle");
-  logSheet.getRange(2, 1).getCell(1, 1).setValue(bookTitle);
-  logSheet.getRange(1, 2).getCell(1, 1).setValue("employeeName");
-  logSheet.getRange(1, 3).getCell(1, 1).setValue("employeeNumber");
-  logSheet.getRange(1, 4).getCell(1, 1).setValue("borrowDate");
-  logSheet.getRange(1, 5).getCell(1, 1).setValue("backDeadline");
-  logSheet.getRange(1, 6).getCell(1, 1).setValue("backDate");
-　SS.setFrozenRows(1);
+  let logSheet = SS.getActiveSheet();
+  let format = [["bookTitle", "employeeName", "employeeNumber", "borrowDate", "backDeadline", "backDate"],
+                [bookTitle, "", "", "", "", ""]];
+  logSheet.getRange(1, 1, 2, 6).setValues(format);
+  SS.setFrozenRows(1);
 
 
   //貸出フォームの作成
@@ -141,7 +126,6 @@ function CreateNewForm() {
 
   let borrowForm = FormApp.create(borrowFormTitle);
   let borrowFormId = borrowForm.getId();
-  let borrowFormFile = DriveApp.getFileById(borrowFormId);
 
   borrowForm.setDescription("このフォームを送信することによって，個人情報が特定されることはありませんのでご安心ください。");
   borrowForm.addTextItem().setTitle("お名前").setRequired(true);
@@ -151,6 +135,7 @@ function CreateNewForm() {
   borrowForm.addDateItem().setTitle('返却日').setRequired(true);
 
   //貸出フォームをフォームフォルダへ移動
+  let borrowFormFile = DriveApp.getFileById(borrowFormId);
   try {
     DriveApp.getFolderById(FormFolderId()).addFile(borrowFormFile);
     // Logger.log(DriveApp.getFolderById(FormFolderId()).getName());
@@ -169,42 +154,62 @@ function CreateNewForm() {
 
   //貸出フォームとシートを紐づけ
   const TRIGGER_SS = SpreadsheetApp.getActiveSpreadsheet();
-
   borrowForm.setDestination(FormApp.DestinationType.SPREADSHEET, TRIGGER_SS.getId());
 
   //紐づけされたシートの名前変更
-  var triggerSheets = TRIGGER_SS.getSheets();
-  for (let i = 0; i < triggerSheets.length; i++) {
-    if (triggerSheets[i].getName() == bookNumber +"-貸出"){
-      // Logger.log("in「5-貸出」は既に存在しています")
-      error.book = bookNumber +"-貸出";
-      error.where = "CreateNewForm(FormManager)";
-      error.what = "フォームと紐づけられた「" + bookNumber + "-貸出」シートは既に存在しています。";
-      InsertError(error);
-      return;
-    }
+  let triggerSheetsLength = TRIGGER_SS.getSheets().length;
+  let triggerSheetsNames = [];
+  for (let i = 0; i < triggerSheetsLength; i++){
+    triggerSheetsNames.push(TRIGGER_SS.getSheets()[i].getName());
   }
 
-  let flag = 0;
-  for (let i = 0; i < triggerSheets.length; i++) {
-    
-    if (triggerSheets[i].getName().indexOf("フォームの回答") >= 0) {
-      if (flag > 0){
-        error.book = bookNumber +"-貸出";
-        error.where = "CreateNewForm(FormManager)";
-        error.what = "（貸出シートを紐づけ）新しいシートが２枚以上あります";
-        InsertError(error);
-        break;
-      }
-      triggerSheets[i].setName(bookNumber + "-貸出");
-      flag++;
+  // var triggerSheets = TRIGGER_SS.getSheets();  //作ろうとしている本の貸出シートが既存のときのエラー
+  // for (let i = 0; i < triggerSheetsLength; i++) {
+  //  if (triggerSheets[i].getName() == bookNumber +"-貸出"){
+  //     error.book = bookNumber +"-貸出";
+  //     error.where = "CreateNewForm(FormManager)";
+  //     error.what = "フォームと紐づけられた「" + bookNumber + "-貸出」シートは既に存在しています。";
+  //     InsertError(error);
+  //     return;
+  //   }
+  // }
+
+  // let flag = 0;
+  // for (let i = 0; i < triggerSheetsLength; i++) {
+  //   if (triggerSheets[i].getName().indexOf("フォームの回答") >= 0) {
+  //     // if (flag > 0){
+  //     //   error.book = bookNumber +"-貸出";
+  //     //   error.where = "CreateNewForm(FormManager)";
+  //     //   error.what = "（貸出シートを紐づけ）新しいシートが２枚以上あります";
+  //     //   InsertError(error);
+  //     //   break;
+  //     // }
+  //     triggerSheets[i].setName(bookNumber + "-貸出");
+  //     flag++;
+  //   }
+  // }
+  // if (flag == 0){
+  //   error.book = bookNumber +"-貸出";
+  //   error.where = "CreateNewForm(FormManager)";
+  //   error.what = "（貸出シートを紐づけ）新しいシートがありません";
+  //   InsertError(error);
+  // }
+  let newSheet = [];
+  triggerSheetsNames.filter(value => {
+    if (value.indexOf("フォームの回答") >= 0){
+      newSheet.push(value);
     }
-  }
-  if (flag == 0){
+  })
+  // Logger.log(newSheet);
+
+  if (newSheet.length == 1){
+    TRIGGER_SS.getSheetByName(newSheet[0]).setName(bookNumber + "-貸出");
+  } else {
     error.book = bookNumber +"-貸出";
     error.where = "CreateNewForm(FormManager)";
-    error.what = "（貸出シートを紐づけ）新しいシートがありません";
+    error.what = "（貸出シートを紐づけ）新しいシートが存在しないか，または２枚以上存在します";
     InsertError(error);
+    return;
   }
 
 }

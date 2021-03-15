@@ -1,9 +1,49 @@
-function SSId() {
-  return "1SWkFydsnvyyihLJ2ok8uPtFX3YWXAlgdPPLTD_96rI4";
+function ConstSS(){
+  const SSId = "1SWkFydsnvyyihLJ2ok8uPtFX3YWXAlgdPPLTD_96rI4";
+
+  try {
+    const SS = SpreadsheetApp.openById(SSId);
+  }
+  catch (e) {
+    let error = {};
+    error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
+    error.book = "";
+    error.employeeName = "";
+    error.employeeNumber = "";
+    error.formAnswer1 = "";
+    error.formAnswer2 = "";
+    error.where = "ConstSS(Utility)";
+    error.what = "スプレッドシート「図書貸出管理」のIDが間違っています";
+    InsertError(error);
+    return;
+  }
+  const SS = SpreadsheetApp.openById(SSId);
+
+  return SS;
 }
 
 function FormFolderId() {
   return "1wh9rk0FAnzoEN54yCaqzeG8q3afVxEG6";
+}
+
+function ConstStatusSheet(){
+  const SS = ConstSS();
+
+  const STATUS_SHEET = SS.getSheetByName("貸出状況");
+  if (STATUS_SHEET == null || STATUS_SHEET == ""){
+    let error = {};
+    error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
+    error.book = "";
+    error.employeeName = "";
+    error.employeeNumber = "";
+    error.formAnswer1 = "";
+    error.formAnswer2 = "";
+    error.where = "ConstStatusSheet(Utility)";
+    error.what = "スプレッドシート「図書貸出管理」内，「貸出状況」シートの名前が間違っています";
+    InsertError(error);
+    return;
+  }
+  return STATUS_SHEET;
 }
 
 function SearchBookRows(bookData, SS){
@@ -32,4 +72,12 @@ function SearchBookRows(bookData, SS){
   }
   Logger.log(bookRows);
   return bookRows;
+}
+
+function Test (){
+  const TRIGGER_SS = SpreadsheetApp.getActiveSpreadsheet();
+  const SHEETS = TRIGGER_SS.getSheets();
+  Logger.log(SHEETS);
+  let sheetNames = SHEETS.getSheetNames();
+  Logger.log(sheetNames);
 }
