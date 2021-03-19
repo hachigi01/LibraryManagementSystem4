@@ -75,9 +75,11 @@ function SearchBookRows(bookData, SS){
 }
 
 function Test (){
-  const TRIGGER_SS = SpreadsheetApp.getActiveSpreadsheet();
-  const SHEETS = TRIGGER_SS.getSheets();
-  Logger.log(SHEETS);
-  let sheetNames = SHEETS.getSheetNames();
-  Logger.log(sheetNames);
+  const SS = ConstSS();
+  const STATUS_SHEET = ConstStatusSheet();
+  let range = STATUS_SHEET.getRange(10, 10, 2, 2);
+  let hairetsu = {"apple" : "red", "banana" : "yellow", "pear" : "green"};
+  Logger.log(hairetsu.apple);
+
+  range.setValues(hairetsu);
 }

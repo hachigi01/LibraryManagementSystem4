@@ -31,12 +31,12 @@ function ManageLibrary(){
   for (let i = 0; i < SHEETS.length; i++){
     if (SHEETS[i].getLastRow() == 1){
       timestamps[i] = 0;
-      sortedTimestamps = 0;
+      sortedTimestamps[i] = 0;
     } else {
       timestamps[i] = SHEETS[i].getRange(SHEETS[i].getLastRow(), 1).getCell(1,1).getValue();
       sortedTimestamps[i] = timestamps[i];
  
-      if (SHEETS[i].getRange(SHEETS[i].getLastRow(), 1).getCell(1,1).getValue() == ""){
+      if (timestamps[i] == ""){
         error.what = "シート「" + SHEETS[i].getName() +"」の最終行" + SHEETS[i].getLastRow() +"行目に" 
                     +"タイムスタンプがありません";
         InsertError(error);
@@ -46,10 +46,10 @@ function ManageLibrary(){
   }
 
   //すべてのシートの中で一番新しいタイムスタンプの本を探す
-  sortedTimestamp.sort(function(a, b) {return b - a;});
+  sortedTimestamps.sort((a, b) => b - a);
 
-  for (let i = 0; i < SHEETS.length; i++){
-    if (sortedTimestamp[0].toString() == timestamp[i].toString()){
+  for (let i = 0; i < timestamps.length; i++){
+    if (sortedTimestamps[0].toString() == timestamps[i].toString()){
       bookData.sheetName = SHEETS[i].getName();
     }
   }

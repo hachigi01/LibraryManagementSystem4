@@ -20,7 +20,7 @@ function InsertError(error) {
   range.getCell(1,8).setValue(error.where);
   range.getCell(1,9).setValue(error.what);
 
-  MailApp.sendEmail("s-toyama@kyoiku-shuppan.co.jp", "【図書貸出管理システム】エラーのご報告" ,
+  MailApp.sendEmail("shiorit.53e@gmail.com", "【図書貸出管理システム】エラーのご報告" ,
                         "\n図書貸出管理システムにエラーがありました。\nエラー用シート" + lastRow +"行目をご確認ください。"
                         + "\n\n---------------\n"
                         + "エラー内容：" + error.where 
