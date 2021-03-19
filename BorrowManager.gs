@@ -9,7 +9,7 @@ function BorrowBook(bookData, SS, STATUS_SHEET){
   　　　　　　 + answers.employeeName + "さん（社員番号" + answers.employeeNumber + "）の貸出"
   　　　　　　 + "（貸出日：" + answers.borrowDate + "，返却予定：" + answers.backDeadline + "）");
 
-  let bookRows = SearchBookRows(bookData);
+  let bookRows = SearchBookRows(bookData, STATUS_SHEET);
   if (bookRows == ""){
     return;
   }
@@ -103,12 +103,16 @@ function InsertBorrowLogData(answers, SS){
     return;
   }
 
-  let range = sheet.getRange("B:E")
-  let lastRow = sheet.getLastRow();
-  range.getCell(lastRow + 1, 1).setValue(answers.employeeName);
-  range.getCell(lastRow + 1, 2).setValue(answers.employeeNumber);
-  range.getCell(lastRow + 1, 3).setValue(answers.borrowDate);
-  range.getCell(lastRow + 1, 4).setValue(answers.backDeadline);
+  // let range = sheet.getRange("B:E");
+  // let lastRow = sheet.getLastRow();
+  let range = sheet.getRange(sheet.getLastRow() + 1, 2, 1, 4);
+  // range.getCell(lastRow + 1, 1).setValue(answers.employeeName);
+  // range.getCell(lastRow + 1, 2).setValue(answers.employeeNumber);
+  // range.getCell(lastRow + 1, 3).setValue(answers.borrowDate);
+  // range.getCell(lastRow + 1, 4).setValue(answers.backDeadline);
+
+  let tmp = [[answers.employeeName, answers.employeeNumber, answers.borrowDate, answers.backDeadline]];
+  range.setValues(tmp);
 }
 
 function ResisterStatus(answers, bookRows, STATUS_SHEET){

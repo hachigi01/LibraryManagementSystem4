@@ -91,7 +91,6 @@ function CreateNewForm() {
   let bookNumber = range.getCell(lastRow, 1).getValue();
 
   if (bookNumber == ""){
-    let error = {};
     error.book = bookNumber;
     error.where = "CreateNewForm(FormManager)";
     error.what = "書籍番号がありません";
@@ -101,7 +100,6 @@ function CreateNewForm() {
 
   let bookTitle = range.getCell(lastRow, 2).getValue();
   if (bookTitle == ""){
-    let error = {};
     error.book = bookNumber;
     error.where = "CreateNewForm(FormManager)";
     error.what = "タイトルがありません";

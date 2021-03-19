@@ -46,16 +46,13 @@ function ConstStatusSheet(){
   return STATUS_SHEET;
 }
 
-function SearchBookRows(bookData, SS){
-  // bookData = {bookNumber : 2}
-  // SS = SpreadsheetApp.openById("19yUkB2P7c9IM6yv_FMoLu21VUMaC9AxiktGU5gfmu-c");
+function SearchBookRows(bookData, STATUS_SHEET){
 
   let error = {};
   error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
   error.book = bookData.bookNumber +"-貸出";
   error.where = "SearchBookRows(Utility)";
 
-  const STATUS_SHEET = SS.getSheetByName("貸出状況");
   let range = STATUS_SHEET.getRange("A:A");
   let lastRow = STATUS_SHEET.getLastRow();
 
@@ -70,7 +67,6 @@ function SearchBookRows(bookData, SS){
     InsertError(error);
     return;
   }
-  Logger.log(bookRows);
   return bookRows;
 }
 
