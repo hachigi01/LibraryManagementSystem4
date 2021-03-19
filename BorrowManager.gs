@@ -32,10 +32,11 @@ function GetBorrowData(bookData){
 
   let lastRow = sheet.getLastRow();
   let range = sheet.getRange(lastRow, 2, 1, sheet.getLastColumn());
+  let cells = range.getValues();
 
   //回答の場所を探す
   let col = 1;
-  while (range.getCell(1, col).isBlank()){
+  while (cells[1][col].isBlank()){
     if (col >= sheet.getLastColumn()){
       error.employeeName = "";
       error.employeeNumber = "";
