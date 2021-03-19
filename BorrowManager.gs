@@ -5,7 +5,9 @@ function BorrowBook(bookData, SS, STATUS_SHEET){
   if (answers == null){
     return;
   }
-  Logger.log("answers:" + answers);
+  Logger.log("本No." + answers.bookNumber + "，"
+  　　　　　　 + answers.employeeName + "さん（社員番号" + answers.employeeNumber + "）の貸出"
+  　　　　　　 + "（貸出日：" + answers.borrowDate + "，返却予定：" + answers.backDeadline + "）");
 
   let bookRows = SearchBookRows(bookData);
   if (bookRows == ""){
@@ -32,12 +34,13 @@ function GetBorrowData(bookData){
 
   let lastRow = sheet.getLastRow();
   let range = sheet.getRange(lastRow, 2, 1, sheet.getLastColumn());
-  let cells = range.getValues();
+  let cells = range.getValues(); //列＝配列番号＋２
 
+  // Logger.log(cells[0][0]);
   //回答の場所を探す
-  let col = 1;
-  while (cells[1][col].isBlank()){
-    if (col >= sheet.getLastColumn()){
+  let col = 0;
+  while (cells[0][col] == ""){
+    if (col >= cells[0].length){
       error.employeeName = "";
       error.employeeNumber = "";
       error.formAnswer1 = "";
@@ -49,24 +52,32 @@ function GetBorrowData(bookData){
     }
     col++
   }
+  // Logger.log(col);
+  let answerCells = sheet.getRange(lastRow, col + 2, 1, 4).getValues();
+  // Logger.log(answerCells);
 
   let answers = {};
   answers.bookNumber = bookData.bookNumber;
-  answers.employeeName = range.getCell(1, col).getValue();
-  answers.employeeNumber = range.getCell(1, col + 1).getValue();
-  answers.borrowDate = range.getCell(1, col + 2).getValue();
-  answers.backDeadline = range.getCell(1, col + 3).getValue();
+  answers.employeeName = answerCells[0][0];
+  answers.employeeNumber = answerCells[0][1];
+  answers.borrowDate = answerCells[0][2];
+  answers.backDeadline = answerCells[0][3];
+  
+  //  Logger.log(typeof answers.employeeName);
+  //  Logger.log(typeof answers.employeeNumber);
+  //  Logger.log(typeof answers.borrowDate);
+  //  Logger.log(typeof answers.backDeadline);
 
-  if (answers.employeeName == null || answers.employeeName == "" ||
-      answers.employeeNumber == null || answers.employeeNumber == "" ||
-      answers.borrowDate == null || answers.borrowDate == "" ||
-      answers.backDeadline == null || answers.backDeadline == ""){
+  if (typeof answers.employeeName == "" ||
+      typeof answers.employeeNumber != "number" ||
+      typeof answers.borrowDate != "object" ||
+      typeof answers.backDeadline != "object"){
     error.employeeName = answers.employeeName;
     error.employeeNumber = answers.employeeNumber;
     error.formAnswer1 = answers.borrowDate;
     error.formAnswer2 = answers.backDeadline;
     error.what = "フォームの回答の取得に失敗しました（トリガーシート" + bookData.sheetName + "，"
-    　　　　　　　　 + lastRow + "行目のタイムスタンプ，フォームの回答" + col + "列目～）";
+    　　　　　　　　 + lastRow + "行目のタイムスタンプ，フォームの回答" + (col + 2) + "列目～）";
     InsertError(error);
     return;
   }

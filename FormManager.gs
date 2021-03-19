@@ -46,7 +46,7 @@ function ManageLibrary(){
   }
 
   //すべてのシートの中で一番新しいタイムスタンプの本を探す
-  sortedTimestamp.sort((a, b) => b - a);
+  sortedTimestamps.sort((a, b) => b - a);
 
   for (let i = 0; i < timestamps.length; i++){
     if (sortedTimestamps[0].toString() == timestamps[i].toString()){
