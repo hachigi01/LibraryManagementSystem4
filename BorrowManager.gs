@@ -53,7 +53,7 @@ function GetBorrowData(bookData){
     col++
   }
   // Logger.log(col);
-  let answerCells = sheet.getRange(lastRow, col + 2, 1, 4).getValues();
+  let answerCells = sheet.getRange(lastRow, col + 2, 1, 4).getValues();  //cells[0][col]から取ってくればよくない？
   // Logger.log(answerCells);
 
   let answers = {};

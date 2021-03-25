@@ -5,10 +5,9 @@ function BackBook(bookData, SS, STATUS_SHEET){
     if (answers == null){
     return;
   }
-  Logger.log("answers:" + answers);
   Logger.log("本No." + answers.bookNumber + "，"
   　　　　　　 + answers.employeeName + "さん（社員番号" + answers.employeeNumber + "）の返却"
-  　　　　　　 + "（返却日：" + answers.backDate) + "）";
+  　　　　　　 + "（返却日：" + answers.backDate + "）");
 
   bookData.bookNumber = answers.bookNumber;
   let bookRows = SearchBookRows(bookData, STATUS_SHEET);
@@ -79,25 +78,40 @@ function InsertBackLogData(answers, SS){
     return;
   }
 
-  let range = sheet.getRange("B:F");
-  let flag = 0;
-  for (let row = 2; row <= sheet.getLastRow(); row++){
-    if (range.getCell(row, 2).getValue() == answers.employeeNumber && range.getCell(row, 5).isBlank()){
-      if (flag > 0){
-        error.what = "こちらの社員番号による，返却のない貸出記録が２か所以上見つかりました";
-        InsertError(error);
-        return;
-      }
-      range.getCell(row, 5).setValue(answers.backDate);
-      flag++;
+  let lastRow = sheet.getLastRow();
+  let cells = sheet.getRange(2, 3, lastRow - 1, 4).getValues();
+  // Logger.log(cells);
+  // Logger.log(cells.length);
+  // Logger.log(cells[0].length)
+
+  let borrowersCells = [];
+  // Logger.log(cells[2][0]);
+  // if (cells[2][0] == answers.employeeNumber){
+  //   Logger.log("in bookNumber");
+  // }
+  // Logger.log(cells[2][3]);
+  // if (cells[2][3] == ""){
+  //   Logger.log("in backDate");
+  // }
+  for (let i = 0; i < cells.length; i++){
+    if (cells[i][0] == answers.employeeNumber && cells[i][3] == ""){
+      borrowersCells.push(i);
     }
   }
-  if (flag == 0){
+  // Logger.log(borrowersCells);
+
+  if (borrowersCells.length == 0){
     error.what = "こちらの社員番号による，返却のない貸出記録が見つかりませんでした";
     InsertError(error);
     return;
   }
+  if (borrowersCells.length > 1){
+    error.what = "こちらの社員番号による，返却のない貸出記録が２か所以上見つかりました";
+    InsertError(error);
+    return;
+  }
 
+  sheet.getRange(borrowersCells[0] + 2, 6).getCell(1, 1).setValue(answers.backDate);  //行=配列番号＋２
 }
 
 function ResetStatus(answers, bookRows, STATUS_SHEET){
