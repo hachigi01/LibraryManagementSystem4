@@ -6,8 +6,12 @@ function BackBook(bookData, SS, STATUS_SHEET){
     return;
   }
   Logger.log("answers:" + answers);
+  Logger.log("本No." + answers.bookNumber + "，"
+  　　　　　　 + answers.employeeName + "さん（社員番号" + answers.employeeNumber + "）の返却"
+  　　　　　　 + "（返却日：" + answers.backDate) + "）";
 
-  let bookRows = SearchBookRows(answers);
+  bookData.bookNumber = answers.bookNumber;
+  let bookRows = SearchBookRows(bookData, STATUS_SHEET);
   if (bookRows == ""){
     return;
   }
@@ -31,26 +35,29 @@ function GetBackData(bookData){
   let sheet = TRIGGER_SS.getSheetByName(bookData.sheetName);
 
   let lastRow = sheet.getLastRow();
-  let range = sheet.getRange("A:D");
+
+  let answerCells = sheet.getRange(lastRow, 1, 1, 4).getValues();
 
   let answers = {};
-  answers.bookNumber = range.getCell(lastRow, 2).getValue();
-  answers.employeeName = range.getCell(lastRow, 3).getValue();
-  answers.employeeNumber = range.getCell(lastRow, 4).getValue();
-  answers.backDate = range.getCell(lastRow, 1).getValue();
+  answers.bookNumber = answerCells[0][1];
+  answers.employeeName = answerCells[0][2];
+  answers.employeeNumber = answerCells[0][3];
+  answers.backDate = answerCells[0][0];
 
-  if (answers.employeeName == null || answers.employeeName == "" ||
-      answers.employeeNumber == null || answers.employeeNumber == "" ||
-      answers.backDate == null || answers.backDate == ""){
+  if (typeof answers.bookNumber != "number" ||
+      typeof answers.employeeName == "" ||
+      typeof answers.employeeNumber != "number" ||
+      typeof answers.backDate != "object"){
     error.employeeName = answers.employeeName;
     error.employeeNumber = answers.employeeNumber;
-    error.formAnswer1 = answers.backDate;
-    error.formAnswer2 = "-";
+    error.formAnswer1 = answers.borrowDate;
+    error.formAnswer2 = answers.backDeadline;
     error.what = "フォームの回答の取得に失敗しました（トリガーシート" + bookData.sheetName + "，"
-    　　　　　　　　 + lastRow + "行目のタイムスタンプ）";
+    　　　　　　　　 + lastRow + "行目）";
     InsertError(error);
     return;
   }
+
   return answers;
 }
 

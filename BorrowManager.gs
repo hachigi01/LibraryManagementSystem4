@@ -7,7 +7,7 @@ function BorrowBook(bookData, SS, STATUS_SHEET){
   }
   Logger.log("本No." + answers.bookNumber + "，"
   　　　　　　 + answers.employeeName + "さん（社員番号" + answers.employeeNumber + "）の貸出"
-  　　　　　　 + "（貸出日：" + answers.borrowDate + "，返却予定：" + answers.backDeadline + "）");
+  　　　　　　 + "（貸出日：" + answers.borrowDate + "，返却予定日：" + answers.backDeadline + "）");
 
   let bookRows = SearchBookRows(bookData, STATUS_SHEET);
   if (bookRows == ""){
