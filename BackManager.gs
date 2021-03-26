@@ -79,7 +79,7 @@ function InsertBackLogData(answers, SS){
   }
 
   let lastRow = sheet.getLastRow();
-  let cells = sheet.getRange(2, 3, lastRow - 1, 4).getValues();
+  let cells = sheet.getRange(2, 3, lastRow - 1/*1行目（見出し行）の分を引く*/, 4).getValues();
   // Logger.log(cells);
   // Logger.log(cells.length);
   // Logger.log(cells[0].length)
@@ -131,18 +131,19 @@ function ResetStatus(answers, bookRows, STATUS_SHEET){
   error.formAnswer2 = "-";
   error.where = "ResetStatus(BackManager)";
 
-  let range = STATUS_SHEET.getRange("A:G");
+  // let range = STATUS_SHEET.getRange("A:G");
   let lastRow = STATUS_SHEET.getLastRow();
+  let borrowersNumbers = STATUS_SHEET.getRange(bookRows[0], 4, bookRows.length, 1).getValues();
   
   let flag = 0;
-  for (let i = 0; i < bookRows.length; i++){
-    if (range.getCell(bookRows[i], 4).getValue() == answers.employeeNumber){
+  for (let i = 0; i < borrowersNumbers.length; i++){
+    if (borrowersNumbers[i][0] == answers.employeeNumber){
       var statusCells = STATUS_SHEET.getRange(bookRows[i], 3, 1, 4);
       flag++;
       break;
     }
   }
-  if(flag == 0){
+  if (flag == 0){
     error.what = "この社員番号の貸出がありません";
     InsertError(error);
     return;
