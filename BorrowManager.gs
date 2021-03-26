@@ -58,10 +58,10 @@ function GetBorrowData(bookData){
 
   let answers = {};
   answers.bookNumber = bookData.bookNumber;
-  answers.employeeName = answerCells[0][0];
-  answers.employeeNumber = answerCells[0][1];
-  answers.borrowDate = answerCells[0][2];
-  answers.backDeadline = answerCells[0][3];
+  answers.employeeName = cells[0][col];
+  answers.employeeNumber = cells[0][col + 1];
+  answers.borrowDate = cells[0][col + 2];
+  answers.backDeadline = cells[0][col + 3];
   
   //  Logger.log(typeof answers.employeeName);
   //  Logger.log(typeof answers.employeeNumber);

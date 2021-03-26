@@ -166,7 +166,7 @@ function UpdateFormByBack(answers, bookRows, STATUS_SHEET) {
   error.where = "UpdateFormByBack(BackManager)";
 
   //フォームを取ってくる
-  let formId = STATUS_SHEET.getRange(bookRows[0], 7).getCell().getValue();
+  let formId = STATUS_SHEET.getRange(bookRows[0], 7).getCell(1, 1).getValue();
 
   if (formId == null || formId == ""){
     error.what = "「貸出状況」シートにフォームIDがありません";
