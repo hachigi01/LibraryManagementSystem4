@@ -7,9 +7,9 @@ function BorrowBook(bookData, SS, STATUS_SHEET){
   }
   Logger.log("本No." + answers.bookNumber + "，"
   　　　　　　 + answers.employeeName + "さん（社員番号" + answers.employeeNumber + "）の貸出"
-  　　　　　　 + "（貸出日：" + answers.borrowDate + "，返却予定：" + answers.backDeadline + "）");
+  　　　　　　 + "（貸出日：" + answers.borrowDate + "，返却予定日：" + answers.backDeadline + "）");
 
-  let bookRows = SearchBookRows(bookData);
+  let bookRows = SearchBookRows(bookData, STATUS_SHEET);
   if (bookRows == ""){
     return;
   }
@@ -53,15 +53,15 @@ function GetBorrowData(bookData){
     col++
   }
   // Logger.log(col);
-  let answerCells = sheet.getRange(lastRow, col + 2, 1, 4).getValues();
+  let answerCells = sheet.getRange(lastRow, col + 2, 1, 4).getValues();  //cells[0][col]から取ってくればよくない？
   // Logger.log(answerCells);
 
   let answers = {};
   answers.bookNumber = bookData.bookNumber;
-  answers.employeeName = answerCells[0][0];
-  answers.employeeNumber = answerCells[0][1];
-  answers.borrowDate = answerCells[0][2];
-  answers.backDeadline = answerCells[0][3];
+  answers.employeeName = cells[0][col];
+  answers.employeeNumber = cells[0][col + 1];
+  answers.borrowDate = cells[0][col + 2];
+  answers.backDeadline = cells[0][col + 3];
   
   //  Logger.log(typeof answers.employeeName);
   //  Logger.log(typeof answers.employeeNumber);
@@ -103,12 +103,16 @@ function InsertBorrowLogData(answers, SS){
     return;
   }
 
-  let range = sheet.getRange("B:E")
-  let lastRow = sheet.getLastRow();
-  range.getCell(lastRow + 1, 1).setValue(answers.employeeName);
-  range.getCell(lastRow + 1, 2).setValue(answers.employeeNumber);
-  range.getCell(lastRow + 1, 3).setValue(answers.borrowDate);
-  range.getCell(lastRow + 1, 4).setValue(answers.backDeadline);
+  // let range = sheet.getRange("B:E");
+  // let lastRow = sheet.getLastRow();
+  let cells = sheet.getRange(sheet.getLastRow() + 1, 2, 1, 4);
+  // range.getCell(lastRow + 1, 1).setValue(answers.employeeName);
+  // range.getCell(lastRow + 1, 2).setValue(answers.employeeNumber);
+  // range.getCell(lastRow + 1, 3).setValue(answers.borrowDate);
+  // range.getCell(lastRow + 1, 4).setValue(answers.backDeadline);
+
+  let values = [[answers.employeeName, answers.employeeNumber, answers.borrowDate, answers.backDeadline]];
+  cells.setValues(values);
 }
 
 function ResisterStatus(answers, bookRows, STATUS_SHEET){
@@ -120,6 +124,7 @@ function ResisterStatus(answers, bookRows, STATUS_SHEET){
   // SS = SpreadsheetApp.openById("19yUkB2P7c9IM6yv_FMoLu21VUMaC9AxiktGU5gfmu-c");
 
   let error = {};
+
   error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
   error.book = answers.bookNumber +"-貸出";
   error.employeeName = answers.employeeName;
@@ -128,24 +133,27 @@ function ResisterStatus(answers, bookRows, STATUS_SHEET){
   error.formAnswer2 = answers.backDeadline;
   error.where = "ResisterStatus(BorrowManager)";
   
-  let range = STATUS_SHEET.getRange("A:E");
   let lastRow = STATUS_SHEET.getLastRow();
+  let borrowersNumbers = STATUS_SHEET.getRange(bookRows[0], 4, bookRows.length, 1).getValues();
 
-  for (let i = 0; i < bookRows.length; i++){
-    if(range.getCell(bookRows[i], 4).getValue() == answers.employeeNumber){
-      error.what = "この本の貸出はもう済んでいます";
-      InsertError(error);
-      return;
-    }
+  let tmp = borrowersNumbers.filter(value => value == answers.employeeNumber);
+  if (tmp.length > 0){
+    error.what = "この本の貸出はもう済んでいます";
+    InsertError(error);
+    return;
   }
   
+  // Logger.log(borrowersNumbers);
+
   let flag = 0;
-  for (let i = 0; i < bookRows.length; i++){
-    if (range.getCell(bookRows[i], 4).isBlank() == false){
+  for (let i = 0; i < borrowersNumbers.length; i++){
+    if (borrowersNumbers[i][0] > 0){
+      // Logger.log("in  i :" + i);
       continue;
     }
     var statusCells = STATUS_SHEET.getRange(bookRows[i], 3, 1, 4);
     flag++;
+    // Logger.log("flag++  when i :" + i);
     break;
   }
   if (flag == 0){
@@ -154,10 +162,12 @@ function ResisterStatus(answers, bookRows, STATUS_SHEET){
     return;
   }
 
-  statusCells.getCell(1, 1).setValue(answers.employeeName);
-  statusCells.getCell(1, 2).setValue(answers.employeeNumber);
-  statusCells.getCell(1, 3).setValue(answers.borrowDate);
-  statusCells.getCell(1, 4).setValue(answers.backDeadline);
+  let values = [[answers.employeeName, answers.employeeNumber, answers.borrowDate, answers.backDeadline]];
+  // statusCells.getCell(1, 1).setValue(answers.employeeName);
+  // statusCells.getCell(1, 2).setValue(answers.employeeNumber);
+  // statusCells.getCell(1, 3).setValue(answers.borrowDate);
+  // statusCells.getCell(1, 4).setValue(answers.backDeadline);
+  statusCells.setValues(values);
 }
 
 function UpdateFormByBorrow(answers, bookRows, STATUS_SHEET){
@@ -178,17 +188,14 @@ function UpdateFormByBorrow(answers, bookRows, STATUS_SHEET){
   error.where = "UpdateFormByBorrow(BorrowManager)";
 
   //本がすべて借りられていない場合はフォームの書き換えを行わない
-  for (let i = 0; i < bookRows.length; i++){
-    if (STATUS_SHEET.getRange(bookRows[i], 3, 1, 4).isBlank()){
-      return;
-    }
+  let borrowersNumbers = STATUS_SHEET.getRange(bookRows[0], 4, bookRows.length, 1).getValues();
+  borrowersNumbers = borrowersNumbers.filter(value => value > 0)
+  if (borrowersNumbers.length < bookRows.length){
+    return;
   }
   
-  //フォームの書き換えを行う
-  let range = STATUS_SHEET.getRange("A:G");
-
   //フォームを取ってくる
-  let formId = range.getCell(bookRows[0], 7).getValue();
+  let formId = STATUS_SHEET.getRange(bookRows[0], 7).getValue();
   if (formId == null || formId == ""){
     error.what = "「貸出状況」シートにフォームIDがありません";
     InsertError(error);
@@ -205,17 +212,17 @@ function UpdateFormByBorrow(answers, bookRows, STATUS_SHEET){
   }
 
   //いちばん近い返却予定日を探す
-  let backDeadlines = [];
-  for (let i = 0; i < bookRows.length; i++){
-    backDeadlines.push(range.getCell(bookRows[i], 6).getValue());
-  }
-  backDeadlines.sort(function(a, b) {return a - b;});
-  backDeadlines[0] = Utilities.formatDate(backDeadlines[0],"JST", "yyyy/MM/dd");
+  let backDeadlines = STATUS_SHEET.getRange(bookRows[0], 6, bookRows.length, 1).getValues();
+  // for (let i = 0; i < bookRows.length; i++){
+  //   backDeadlines.push(range.getCell(bookRows[i], 6).getValue());
+  // }
+  backDeadlines.sort((a, b) => a - b);
+  backDeadlines[0][0] = Utilities.formatDate(backDeadlines[0][0],"JST", "yyyy/MM/dd");
 
   //フォームの書き換え
   let items = form.getItems();  
   for (let i = 0; i < items.length; i++){
     form.deleteItem(items[i]);
   }
-  form.setDescription("貸出中につき現在借りられません。しばらくお待ちください。 \n返却予定日：" + backDeadlines[0]);
+  form.setDescription("貸出中につき現在借りられません。しばらくお待ちください。 \n返却予定日：" + backDeadlines[0][0]);
 }
