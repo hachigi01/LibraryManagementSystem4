@@ -36,15 +36,11 @@ function GetBorrowData(bookData){
   let range = sheet.getRange(lastRow, 2, 1, sheet.getLastColumn());
   let cells = range.getValues(); //列＝配列番号＋２
 
-  // Logger.log(cells[0][0]);
   //回答の場所を探す
   let col = 0;
   while (cells[0][col] == ""){
     if (col >= cells[0].length){
-      error.employeeName = "";
-      error.employeeNumber = "";
-      error.formAnswer1 = "";
-      error.formAnswer2 = "";
+      error.key = "answers取得前";
       error.what = "フォームの回答がありません（トリガーシート" + bookData.sheetName + "，"
       　　　　　　　　 + lastRow + "行目のタイムスタンプ）";
       InsertError(error);
@@ -52,9 +48,6 @@ function GetBorrowData(bookData){
     }
     col++
   }
-  // Logger.log(col);
-  let answerCells = sheet.getRange(lastRow, col + 2, 1, 4).getValues();  //cells[0][col]から取ってくればよくない？
-  // Logger.log(answerCells);
 
   let answers = {};
   answers.bookNumber = bookData.bookNumber;
@@ -62,23 +55,15 @@ function GetBorrowData(bookData){
   answers.employeeNumber = cells[0][col + 1];
   answers.borrowDate = cells[0][col + 2];
   answers.backDeadline = cells[0][col + 3];
-  
-  //  Logger.log(typeof answers.employeeName);
-  //  Logger.log(typeof answers.employeeNumber);
-  //  Logger.log(typeof answers.borrowDate);
-  //  Logger.log(typeof answers.backDeadline);
 
   if (typeof answers.employeeName == "" ||
       typeof answers.employeeNumber != "number" ||
       typeof answers.borrowDate != "object" ||
       typeof answers.backDeadline != "object"){
-    error.employeeName = answers.employeeName;
-    error.employeeNumber = answers.employeeNumber;
-    error.formAnswer1 = answers.borrowDate;
-    error.formAnswer2 = answers.backDeadline;
+    error.key = "貸出";
     error.what = "フォームの回答の取得に失敗しました（トリガーシート" + bookData.sheetName + "，"
     　　　　　　　　 + lastRow + "行目のタイムスタンプ，フォームの回答" + (col + 2) + "列目～）";
-    InsertError(error);
+    InsertError(error, answers);
     return;
   }
 
@@ -89,70 +74,56 @@ function InsertBorrowLogData(answers, SS){
 
   let error = {};
   error.book = answers.bookNumber +"-貸出";
-  error.employeeName = answers.employeeName;
-  error.employeeNumber = answers.employeeNumber;
-  error.formAnswer1 = answers.borrowDate;
-  error.formAnswer2 = answers.backDeadline;
+  // error.employeeName = answers.employeeName;
+  // error.employeeNumber = answers.employeeNumber;
+  // error.formAnswer1 = answers.borrowDate;
+  // error.formAnswer2 = answers.backDeadline;
+  error.key = "貸出";
   error.where = "InsertBorrowLogData(BorrowManager)";
 
   let sheet = SS.getSheetByName(answers.bookNumber);
   if (sheet == null || sheet == ""){
     error.what = "貸出履歴シート「" + answers.bookNumber + "」の取得に失敗しました";
-    InsertError(error);
+    InsertError(error, answers);
     return;
   }
 
-  // let range = sheet.getRange("B:E");
-  // let lastRow = sheet.getLastRow();
   let cells = sheet.getRange(sheet.getLastRow() + 1, 2, 1, 4);
-  // range.getCell(lastRow + 1, 1).setValue(answers.employeeName);
-  // range.getCell(lastRow + 1, 2).setValue(answers.employeeNumber);
-  // range.getCell(lastRow + 1, 3).setValue(answers.borrowDate);
-  // range.getCell(lastRow + 1, 4).setValue(answers.backDeadline);
 
   let values = [[answers.employeeName, answers.employeeNumber, answers.borrowDate, answers.backDeadline]];
   cells.setValues(values);
 }
 
 function ResisterStatus(answers, bookRows, STATUS_SHEET){
-  // answers = {bookNumber : 1,
-  //            employeeName : "山田太郎",
-  //            employeeNumber : 5555,
-  //            borrowDate : new Date,
-  //            backDeadline : new Date};
-  // SS = SpreadsheetApp.openById("19yUkB2P7c9IM6yv_FMoLu21VUMaC9AxiktGU5gfmu-c");
 
   let error = {};
-
-  error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
   error.book = answers.bookNumber +"-貸出";
-  error.employeeName = answers.employeeName;
-  error.employeeNumber = answers.employeeNumber;
-  error.formAnswer1 = answers.borrowDate;
-  error.formAnswer2 = answers.backDeadline;
+  // error.employeeName = answers.employeeName;
+  // error.employeeNumber = answers.employeeNumber;
+  // error.formAnswer1 = answers.borrowDate;
+  // error.formAnswer2 = answers.backDeadline;
+  error.key = "貸出";
   error.where = "ResisterStatus(BorrowManager)";
   
   let lastRow = STATUS_SHEET.getLastRow();
   let borrowersNumbers = STATUS_SHEET.getRange(bookRows[0], 4, bookRows.length, 1).getValues();
 
+  //同じ人によってこの本が借りられているとき
   let tmp = borrowersNumbers.filter(value => value == answers.employeeNumber);
   if (tmp.length > 0){
     error.what = "この本の貸出はもう済んでいます";
-    InsertError(error);
+    InsertError(error, answers);
     return;
   }
-  
-  // Logger.log(borrowersNumbers);
 
+  //貸出状況シートに履歴を書き込む
   let flag = 0;
   for (let i = 0; i < borrowersNumbers.length; i++){
     if (borrowersNumbers[i][0] > 0){
-      // Logger.log("in  i :" + i);
       continue;
     }
     var statusCells = STATUS_SHEET.getRange(bookRows[i], 3, 1, 4);
     flag++;
-    // Logger.log("flag++  when i :" + i);
     break;
   }
   if (flag == 0){
@@ -162,27 +133,18 @@ function ResisterStatus(answers, bookRows, STATUS_SHEET){
   }
 
   let values = [[answers.employeeName, answers.employeeNumber, answers.borrowDate, answers.backDeadline]];
-  // statusCells.getCell(1, 1).setValue(answers.employeeName);
-  // statusCells.getCell(1, 2).setValue(answers.employeeNumber);
-  // statusCells.getCell(1, 3).setValue(answers.borrowDate);
-  // statusCells.getCell(1, 4).setValue(answers.backDeadline);
   statusCells.setValues(values);
 }
 
 function UpdateFormByBorrow(answers, bookRows, STATUS_SHEET){
-  // answers = {bookNumber : 4,
-  //            employeeName : "山田太郎",
-  //            employeeNumber : 5555,
-  //            borrowDate : new Date,
-  //            backDeadline : new Date};
-  // SS = SpreadsheetApp.openById("19yUkB2P7c9IM6yv_FMoLu21VUMaC9AxiktGU5gfmu-c");
 
   let error = {};
   error.book = answers.bookNumber +"-貸出";
-  error.employeeName = answers.employeeName;
-  error.employeeNumber = answers.employeeNumber;
-  error.formAnswer1 = answers.borrowDate;
-  error.formAnswer2 = answers.backDeadline;
+  // error.employeeName = answers.employeeName;
+  // error.employeeNumber = answers.employeeNumber;
+  // error.formAnswer1 = answers.borrowDate;
+  // error.formAnswer2 = answers.backDeadline;
+  error.key = "貸出";
   error.where = "UpdateFormByBorrow(BorrowManager)";
 
   //本がすべて借りられていない場合はフォームの書き換えを行わない
@@ -211,9 +173,6 @@ function UpdateFormByBorrow(answers, bookRows, STATUS_SHEET){
 
   //いちばん近い返却予定日を探す
   let backDeadlines = STATUS_SHEET.getRange(bookRows[0], 6, bookRows.length, 1).getValues();
-  // for (let i = 0; i < bookRows.length; i++){
-  //   backDeadlines.push(range.getCell(bookRows[i], 6).getValue());
-  // }
   backDeadlines.sort((a, b) => a - b);
   backDeadlines[0][0] = Utilities.formatDate(backDeadlines[0][0],"JST", "yyyy/MM/dd");
 
