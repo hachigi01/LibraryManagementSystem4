@@ -7,7 +7,8 @@ function BorrowBook(bookData, SS, STATUS_SHEET){
   }
   Logger.log("本No." + answers.bookNumber + "，"
   　　　　　　 + answers.employeeName + "さん（社員番号" + answers.employeeNumber + "）の貸出"
-  　　　　　　 + "（貸出日：" + answers.borrowDate + "，返却予定日：" + answers.backDeadline + "）");
+  　　　　　　 + "（貸出日：" + Utilities.formatDate(answers.borrowDate,"JST", "yyyy/MM/dd")
+             + "，返却予定日：" + Utilities.formatDate(answers.backDeadline,"JST", "yyyy/MM/dd") + "）");
 
   let bookRows = SearchBookRows(bookData, STATUS_SHEET);
   if (bookRows == ""){
@@ -25,7 +26,6 @@ function BorrowBook(bookData, SS, STATUS_SHEET){
 function GetBorrowData(bookData){
 
   let error = {};
-  error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
   error.book = bookData.bookNumber +"-貸出";
   error.where = "GetBorrowData(BorrowManager)";
 
@@ -88,7 +88,6 @@ function GetBorrowData(bookData){
 function InsertBorrowLogData(answers, SS){
 
   let error = {};
-  error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
   error.book = answers.bookNumber +"-貸出";
   error.employeeName = answers.employeeName;
   error.employeeNumber = answers.employeeNumber;
@@ -179,7 +178,6 @@ function UpdateFormByBorrow(answers, bookRows, STATUS_SHEET){
   // SS = SpreadsheetApp.openById("19yUkB2P7c9IM6yv_FMoLu21VUMaC9AxiktGU5gfmu-c");
 
   let error = {};
-  error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
   error.book = answers.bookNumber +"-貸出";
   error.employeeName = answers.employeeName;
   error.employeeNumber = answers.employeeNumber;

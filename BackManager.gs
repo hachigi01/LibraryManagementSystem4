@@ -7,7 +7,7 @@ function BackBook(bookData, SS, STATUS_SHEET){
   }
   Logger.log("本No." + answers.bookNumber + "，"
   　　　　　　 + answers.employeeName + "さん（社員番号" + answers.employeeNumber + "）の返却"
-  　　　　　　 + "（返却日：" + answers.backDate + "）");
+  　　　　　　 + "（返却日：" + Utilities.formatDate(answers.backDate,"JST", "yyyy/MM/dd") + "）");
 
   bookData.bookNumber = answers.bookNumber;
   let bookRows = SearchBookRows(bookData, STATUS_SHEET);
@@ -63,7 +63,6 @@ function GetBackData(bookData){
 function InsertBackLogData(answers, SS){
 
   let error = {};
-  error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
   error.book = answers.bookNumber　+ "-返却";
   error.employeeName = answers.employeeName;
   error.employeeNumber = answers.employeeNumber;
@@ -123,7 +122,6 @@ function ResetStatus(answers, bookRows, STATUS_SHEET){
   // SS = SpreadsheetApp.openById("19yUkB2P7c9IM6yv_FMoLu21VUMaC9AxiktGU5gfmu-c");
 
   let error = {};
-  error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
   error.book = answers.bookNumber　+ "-返却";
   error.employeeName = answers.employeeName;
   error.employeeNumber = answers.employeeNumber;
@@ -157,7 +155,6 @@ function UpdateFormByBack(answers, bookRows, STATUS_SHEET) {
   // SS = SpreadsheetApp.openById("19yUkB2P7c9IM6yv_FMoLu21VUMaC9AxiktGU5gfmu-c");
 
   let error = {};
-  error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
   error.book = answers.bookNumber　+ "-返却";
   error.employeeName = answers.employeeName;
   error.employeeNumber = answers.employeeNumber;
