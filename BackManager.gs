@@ -26,8 +26,8 @@ function BackBook(bookData, SS, STATUS_SHEET){
 function GetBackData(bookData){
 
   let error = {};
-  error.timestamp = new Date(),"JST", "yyyy/MM/dd HH:mm:ss";
   error.book = bookData.bookNumber +"-返却";
+  error.key = "返却";
   error.where = "GetBackData(BorrowManager)";
 
   const TRIGGER_SS = SpreadsheetApp.getActiveSpreadsheet();
@@ -47,13 +47,13 @@ function GetBackData(bookData){
       typeof answers.employeeName == "" ||
       typeof answers.employeeNumber != "number" ||
       typeof answers.backDate != "object"){
-    error.employeeName = answers.employeeName;
-    error.employeeNumber = answers.employeeNumber;
-    error.formAnswer1 = answers.borrowDate;
-    error.formAnswer2 = answers.backDeadline;
+    // error.employeeName = answers.employeeName;
+    // error.employeeNumber = answers.employeeNumber;
+    // error.formAnswer1 = answers.borrowDate;
+    // error.formAnswer2 = answers.backDeadline;
     error.what = "フォームの回答の取得に失敗しました（トリガーシート" + bookData.sheetName + "，"
     　　　　　　　　 + lastRow + "行目）";
-    InsertError(error);
+    InsertError(error, answers);
     return;
   }
 
@@ -64,49 +64,38 @@ function InsertBackLogData(answers, SS){
 
   let error = {};
   error.book = answers.bookNumber　+ "-返却";
-  error.employeeName = answers.employeeName;
-  error.employeeNumber = answers.employeeNumber;
-  error.formAnswer1 = answers.backDate;
-  error.formAnswer2 = "-";
+  // error.employeeName = answers.employeeName;
+  // error.employeeNumber = answers.employeeNumber;
+  // error.formAnswer1 = answers.backDate;
+  // error.formAnswer2 = "-";
+  error.key = "返却";
   error.where = "InsertBackLogData(BackManager)";
 
   let sheet = SS.getSheetByName(answers.bookNumber);
   if (sheet == null || sheet == ""){
     error.what = "貸出履歴シート「" + answers.bookNumber + "」の取得に失敗しました";
-    InsertError(error);
+    InsertError(error, answers);
     return;
   }
 
   let lastRow = sheet.getLastRow();
   let cells = sheet.getRange(2, 3, lastRow - 1/*1行目（見出し行）の分を引く*/, 4).getValues();
-  // Logger.log(cells);
-  // Logger.log(cells.length);
-  // Logger.log(cells[0].length)
 
+  //同じ社員番号かつ未返却の本を見つける
   let borrowersCells = [];
-  // Logger.log(cells[2][0]);
-  // if (cells[2][0] == answers.employeeNumber){
-  //   Logger.log("in bookNumber");
-  // }
-  // Logger.log(cells[2][3]);
-  // if (cells[2][3] == ""){
-  //   Logger.log("in backDate");
-  // }
   for (let i = 0; i < cells.length; i++){
     if (cells[i][0] == answers.employeeNumber && cells[i][3] == ""){
       borrowersCells.push(i);
     }
   }
-  // Logger.log(borrowersCells);
-
   if (borrowersCells.length == 0){
     error.what = "こちらの社員番号による，返却のない貸出記録が見つかりませんでした";
-    InsertError(error);
+    InsertError(error, answers);
     return;
   }
   if (borrowersCells.length > 1){
     error.what = "こちらの社員番号による，返却のない貸出記録が２か所以上見つかりました";
-    InsertError(error);
+    InsertError(error, answers);
     return;
   }
 
@@ -114,22 +103,16 @@ function InsertBackLogData(answers, SS){
 }
 
 function ResetStatus(answers, bookRows, STATUS_SHEET){
-  // answers = {bookNumber : 1,
-  //            employeeName : "山田太郎",
-  //            employeeNumber : 4444,
-  //            borrowDate : new Date,
-  //            backDeadline : new Date};
-  // SS = SpreadsheetApp.openById("19yUkB2P7c9IM6yv_FMoLu21VUMaC9AxiktGU5gfmu-c");
 
   let error = {};
   error.book = answers.bookNumber　+ "-返却";
-  error.employeeName = answers.employeeName;
-  error.employeeNumber = answers.employeeNumber;
-  error.formAnswer1 = answers.backDate;
-  error.formAnswer2 = "-";
+  // error.employeeName = answers.employeeName;
+  // error.employeeNumber = answers.employeeNumber;
+  // error.formAnswer1 = answers.backDate;
+  // error.formAnswer2 = "-";
+  error.key = "返却";
   error.where = "ResetStatus(BackManager)";
 
-  // let range = STATUS_SHEET.getRange("A:G");
   let lastRow = STATUS_SHEET.getLastRow();
   let borrowersNumbers = STATUS_SHEET.getRange(bookRows[0], 4, bookRows.length, 1).getValues();
   
@@ -143,7 +126,7 @@ function ResetStatus(answers, bookRows, STATUS_SHEET){
   }
   if (flag == 0){
     error.what = "この社員番号の貸出がありません";
-    InsertError(error);
+    InsertError(error, answers);
     return;
   }
 
@@ -151,15 +134,14 @@ function ResetStatus(answers, bookRows, STATUS_SHEET){
 }
 
 function UpdateFormByBack(answers, bookRows, STATUS_SHEET) {
-  // answers = {bookNumber : 3};
-  // SS = SpreadsheetApp.openById("19yUkB2P7c9IM6yv_FMoLu21VUMaC9AxiktGU5gfmu-c");
 
   let error = {};
   error.book = answers.bookNumber　+ "-返却";
-  error.employeeName = answers.employeeName;
-  error.employeeNumber = answers.employeeNumber;
-  error.formAnswer1 = answers.backDate;
-  error.formAnswer2 = "-";
+  // error.employeeName = answers.employeeName;
+  // error.employeeNumber = answers.employeeNumber;
+  // error.formAnswer1 = answers.backDate;
+  // error.formAnswer2 = "-";
+  error.key = "返却";
   error.where = "UpdateFormByBack(BackManager)";
 
   //フォームを取ってくる
@@ -167,7 +149,7 @@ function UpdateFormByBack(answers, bookRows, STATUS_SHEET) {
 
   if (formId == null || formId == ""){
     error.what = "「貸出状況」シートにフォームIDがありません";
-    InsertError(error);
+    InsertError(error, answers);
     return;
   }
 
@@ -176,7 +158,7 @@ function UpdateFormByBack(answers, bookRows, STATUS_SHEET) {
   }
   catch(e){
     error.what = "「貸出状況」シートのフォームIDが間違っています";
-    InsertError(error);
+    InsertError(error, answers);
     return;
   }
  
